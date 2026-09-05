@@ -1,0 +1,5 @@
+/bin/
+/emoji-sequence-kit
+*.test
+*.out
+.DS_Store
