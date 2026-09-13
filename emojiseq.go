@@ -9,7 +9,10 @@
 // treat each of them as one unit.
 package emojiseq
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 const (
 	zwj             = '‍'
@@ -151,6 +154,45 @@ func Sequences(s string) []string {
 	for i := 0; i < len(r); {
 		if end, ok := consumeAt(r, i); ok {
 			out = append(out, string(r[i:end]))
+			i = end
+			continue
+		}
+		i++
+	}
+	return out
+}
+
+// Position marks a byte range within an input string, [Start, End),
+// covering one emoji sequence found by Positions.
+type Position struct {
+	Start int
+	End   int
+}
+
+// runeByteOffsets returns the byte offset of each rune in s, plus a
+// final entry equal to len(s), so offsets[i] is where rune i begins
+// and offsets[len(r)] is the end of the string.
+func runeByteOffsets(s string) []int {
+	offsets := make([]int, 0, len(s)+1)
+	bi := 0
+	for _, ch := range s {
+		offsets = append(offsets, bi)
+		bi += utf8.RuneLen(ch)
+	}
+	offsets = append(offsets, bi)
+	return offsets
+}
+
+// Positions returns the byte range of every emoji sequence found in
+// s, in order. Each Position can be sliced directly out of s, e.g.
+// s[pos.Start:pos.End], to recover the sequence text.
+func Positions(s string) []Position {
+	r := []rune(s)
+	offsets := runeByteOffsets(s)
+	var out []Position
+	for i := 0; i < len(r); {
+		if end, ok := consumeAt(r, i); ok {
+			out = append(out, Position{Start: offsets[i], End: offsets[end]})
 			i = end
 			continue
 		}

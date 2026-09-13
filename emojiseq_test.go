@@ -91,6 +91,30 @@ func TestStrip(t *testing.T) {
 	}
 }
 
+func TestPositions(t *testing.T) {
+	in := "movie night " + family + " tonight " + flagCanada + "!"
+	got := Positions(in)
+	want := []string{family, flagCanada}
+
+	if len(got) != len(want) {
+		t.Fatalf("Positions(%q) returned %d ranges, want %d: %v", in, len(got), len(want), got)
+	}
+	for i, pos := range got {
+		if pos.Start < 0 || pos.End > len(in) || pos.Start >= pos.End {
+			t.Fatalf("Positions(%q)[%d] = %+v is out of bounds for len %d", in, i, pos, len(in))
+		}
+		if got := in[pos.Start:pos.End]; got != want[i] {
+			t.Errorf("Positions(%q)[%d] sliced to %q, want %q", in, i, got, want[i])
+		}
+	}
+}
+
+func TestPositionsNoEmoji(t *testing.T) {
+	if got := Positions("plain text, no emoji"); got != nil {
+		t.Errorf("Positions with no emoji = %v, want nil", got)
+	}
+}
+
 func TestIsSingleSequence(t *testing.T) {
 	cases := []struct {
 		in   string

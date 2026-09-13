@@ -44,6 +44,10 @@ func main() {
 
 	fmt.Println(emojiseq.IsSingleSequence("👋🏽")) // true
 	fmt.Println(emojiseq.IsSingleSequence("👋🏽!")) // false
+
+	for _, pos := range emojiseq.Positions(msg) {
+		fmt.Println(msg[pos.Start:pos.End]) // 🍿, then 👨‍👩‍👧‍👦
+	}
 }
 ```
 
