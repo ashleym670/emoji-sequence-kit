@@ -63,9 +63,14 @@ $ echo "good morning 🇨🇦 3️⃣ times" | go run ./cmd/emojiseq count
 
 $ go run ./cmd/emojiseq check "👋🏽"; echo $?
 0
+
+$ echo "good morning 🇨🇦 3️⃣ times" | go run ./cmd/emojiseq list --json
+[{"text":"🇨🇦","start":13,"end":21},{"text":"3️⃣","start":22,"end":29}]
 ```
 
-If no text argument is given, the CLI reads from stdin.
+Any command accepts `--json` to print a single JSON value on stdout
+instead of the plain-text form. If no text argument is given, the
+CLI reads from stdin.
 
 ## Known gaps
 
