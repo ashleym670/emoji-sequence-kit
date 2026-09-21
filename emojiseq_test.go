@@ -3,6 +3,7 @@ package emojiseq
 import (
 	"reflect"
 	"testing"
+	"unicode/utf8"
 )
 
 // Codepoints are spelled out with \U escapes rather than pasted as
@@ -137,4 +138,39 @@ func TestIsSingleSequence(t *testing.T) {
 			t.Errorf("IsSingleSequence(%q) = %v, want %v", c.in, got, c.want)
 		}
 	}
+}
+
+// FuzzConsumeAt hunts for inputs that make consumeAt panic (out-of-range
+// rune indexing is the obvious risk, given how many lookahead offsets it
+// juggles) or that violate its own contract: a match must consume at
+// least one rune, and a non-match must leave the index untouched.
+func FuzzConsumeAt(f *testing.F) {
+	seeds := []string{
+		family, flagCanada, keycapThree, waveMedium, flagEngland,
+		"", "hello world", zwjS, blackFlag, tagCancel, tagG,
+		riC, riC + riC + riC, "3" + vs16, vs16 + keycapMark,
+		zwjS + zwjS + zwjS, blackFlag + tagG, string(rune(0x10FFFF)),
+		"\x00", "3" + vs16 + keycapMark + zwjS,
+	}
+	for _, s := range seeds {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, s string) {
+		if !utf8.ValidString(s) {
+			return
+		}
+		r := []rune(s)
+		for i := 0; i < len(r); i++ {
+			end, ok := consumeAt(r, i)
+			if end < i || end > len(r) {
+				t.Fatalf("consumeAt(%q, %d) returned out-of-range end %d (len %d)", s, i, end, len(r))
+			}
+			if ok && end == i {
+				t.Fatalf("consumeAt(%q, %d) reported a match but consumed nothing", s, i)
+			}
+			if !ok && end != i {
+				t.Fatalf("consumeAt(%q, %d) reported no match but moved the index to %d", s, i, end)
+			}
+		}
+	})
 }
